@@ -14,7 +14,7 @@ This userscript adds a floating button to Chase's offer hub page, allowing users
 
 Click the link below to install the script directly:
 
-- [One-Click Install](./Chase-One-Click-Offer-Activator.user.js)
+- [One-Click Install](https://github.com/phuanh004/Chase-One-Click-Offer-Activator/raw/main/Chase-One-Click-Offer-Activator.user.js)
 
 ## Features
 
