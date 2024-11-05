@@ -10,7 +10,7 @@
 
 This userscript adds a floating button to Chase's offer hub page, allowing users to activate all available offers with a single click.
 
-![[screenshot.png]]
+![](assets/screenshot.png)
 ## Installation
 
 Click the link below to install the script directly:
