@@ -1,0 +1,21 @@
+name: Auto-close pending verification issues
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  close_pending_verification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close issues labelled pending-verification after 10 days
+        uses: actions/stale@v4
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          days-before-stale: 0
+          days-before-close: 10
+          stale-issue-message: "This issue is marked pending verification and will be closed automatically in 10 days if there is no further activity. If this is still an issue, please reply to keep it open."
+          close-issue-message: "Closing this issue due to no verification — please reopen or comment if the problem persists."
+          only-labels: pending-verification
+          operations-per-run: 100
