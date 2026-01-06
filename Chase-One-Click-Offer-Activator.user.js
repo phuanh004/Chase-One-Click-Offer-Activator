@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chase One-Click Offer Activator
 // @namespace    https://anhpham.dev/
-// @version      0.1
+// @version      0.2.0
 // @description  Adds a floating button to activate all offers on Chase's offer hub page with one click.
 // @author       Anh Pham
 // @license      MIT
@@ -48,17 +48,43 @@
 
   // Function to activate all offers
   function activateOffers() {
-    const offerButtons = document.querySelectorAll(
+    // The markup places the clickable behavior on a wrapper (role=button or data-cy="commerce-tile")
+    // while the selector targets an inner SVG. Some SVG elements may not have a .click() method,
+    // so find the nearest interactive ancestor and dispatch a MouseEvent for compatibility.
+    const svgButtons = document.querySelectorAll(
       '[data-cy="commerce-tile-button"]'
     );
-    offerButtons.forEach((btn) => btn.click());
-    alert(`Activated ${offerButtons.length} offers!`);
+    let activated = 0;
+    svgButtons.forEach((btn) => {
+      try {
+        const clickable =
+          btn.closest(
+            '[role="button"], [data-cy="commerce-tile"], button, a'
+          ) || btn;
+        clickable.dispatchEvent(
+          new MouseEvent("click", {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+          })
+        );
+        activated++;
+      } catch (e) {
+        console.error("Failed to activate offer element", btn, e);
+      }
+    });
+    alert(
+      `Activated ${activated} offers (found ${svgButtons.length} targets).`
+    );
   }
 
   // Show button only on the specific offer hub page
   function checkPage() {
+    // The UI may append query params to the hash (e.g. "#/dashboard/merchantOffers/offer-hub?accountId=...")
+    // so use startsWith and also check the full href as a fallback.
     const isOfferHub =
-      window.location.hash === "#/dashboard/merchantOffers/offer-hub";
+      window.location.hash.startsWith("#/dashboard/merchantOffers/offer-hub") ||
+      window.location.href.includes("/merchantOffers/offer-hub");
     button.style.display = isOfferHub ? "flex" : "none";
   }
 
