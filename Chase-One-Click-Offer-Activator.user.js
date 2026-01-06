@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chase One-Click Offer Activator
 // @namespace    https://anhpham.dev/
-// @version      0.2.0
+// @version      0.2.1
 // @description  Adds a floating button to activate all offers on Chase's offer hub page with one click.
 // @author       Anh Pham
 // @license      MIT
@@ -93,6 +93,64 @@
 
   // Initial check in case the page loads directly to the offer hub
   checkPage();
+
+  // Setup SPA navigation observers: patch history API and observe DOM mutations
+  // to handle route changes that do not emit hashchange events.
+  let locationChangeTimeout = null;
+  function setupNavigationObservers() {
+    // Patch history methods to emit a custom event `locationchange`
+    const _pushState = history.pushState;
+    const _replaceState = history.replaceState;
+    history.pushState = function (...args) {
+      const ret = _pushState.apply(this, args);
+      window.dispatchEvent(new Event("locationchange"));
+      return ret;
+    };
+    history.replaceState = function (...args) {
+      const ret = _replaceState.apply(this, args);
+      window.dispatchEvent(new Event("locationchange"));
+      return ret;
+    };
+    // Back/forward navigation
+    window.addEventListener("popstate", () =>
+      window.dispatchEvent(new Event("locationchange"))
+    );
+
+    // Debounced handler for location changes
+    window.addEventListener("locationchange", () => {
+      if (locationChangeTimeout) clearTimeout(locationChangeTimeout);
+      locationChangeTimeout = setTimeout(() => {
+        checkPage();
+      }, 100);
+    });
+
+    // MutationObserver to detect when offer tiles or grid are added to the DOM
+    // This helps for pages that update content after navigation.
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        for (const node of m.addedNodes) {
+          if (!(node instanceof Element)) continue;
+          if (
+            node.matches?.(
+              '[data-cy="commerce-tile"], [data-cy="commerce-tile-button"], [data-testid="grid-items-container"]'
+            ) ||
+            node.querySelector?.(
+              '[data-cy="commerce-tile"], [data-cy="commerce-tile-button"], [data-testid="grid-items-container"]'
+            )
+          ) {
+            // Ensure the page visibility logic runs when new content appears
+            checkPage();
+            return;
+          }
+        }
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // Start observing SPA navigation and DOM changes
+  setupNavigationObservers();
 
   // Add click event listener to activate offers
   button.addEventListener("click", activateOffers);
